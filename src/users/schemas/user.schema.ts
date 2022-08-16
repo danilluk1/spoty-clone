@@ -19,7 +19,7 @@ export class User {
   @Prop()
   totalTracks: number;
 
-  @Prop()
+  @Prop({ default: false })
   isPremium: boolean;
 }
 

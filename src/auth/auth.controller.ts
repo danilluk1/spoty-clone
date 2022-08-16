@@ -1,7 +1,14 @@
-import { Body, Controller, Post, Res, ValidationPipe } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Post,
+  Req,
+  Res,
+  ValidationPipe,
+} from '@nestjs/common';
 import { RegisterUserDto } from 'src/users/dto/register-user.dto';
 import { AuthService } from './auth.service';
-import { Response } from 'express';
+import { Response, Request } from 'express';
 import { LoginUserDto } from 'src/users/dto/login-user.dto';
 import { Headers } from '@nestjs/common';
 
@@ -15,7 +22,6 @@ export class AuthController {
     @Res({ passthrough: true }) response: Response,
   ) {
     const user = await this.authService.register(registerUserDto);
-    delete user['refreshToken'];
 
     response
       .cookie('refreshToken', user.refreshToken, {
@@ -31,7 +37,6 @@ export class AuthController {
     @Res({ passthrough: true }) response: Response,
   ) {
     const user = await this.authService.login(loginUserDto);
-    delete user['refreshToken'];
 
     response
       .cookie('refreshToken', user.refreshToken, {
@@ -42,13 +47,20 @@ export class AuthController {
   }
 
   @Post('refresh')
-  async refresh(@Headers('authorization') bearer) {
-    await this.authService.refreshToken(bearer);
+  async refresh(@Req() request: Request) {
+    const { refreshToken } = request.cookies;
+    const res = await this.authService.refreshToken(refreshToken);
+
+    return res;
   }
 
   @Post('logout')
-  async logout(@Res({ passthrough: true }) response: Response) {
-    await this.authService.logout();
-    response.clearCookie('refreshToken');
+  async logout(
+    @Req() request: Request,
+    @Res({ passthrough: true }) response: Response,
+  ) {
+    const { refreshToken } = request.cookies;
+    await this.authService.logout(refreshToken);
+    response.clearCookie('refreshToken').status(200);
   }
 }

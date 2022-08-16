@@ -66,14 +66,17 @@ export class AuthService {
       email: user.email,
       name: user.name,
       _id: user._id,
-      refreshToken: user.refreshToken,
+      refreshToken: tokens.refresh_token,
       accessToken: tokens.access_token,
     };
   }
 
-  async refreshToken(id: string) {
-    const user = await this.userModel.findById(id);
-    if (!user) throw new HttpException('Cant find a user', 400);
+  async refreshToken(refreshToken: string) {
+    const decodedUser = this.tokensService.parseRefreshToken(refreshToken);
+    if (!decodedUser) throw new HttpException('Invalid refresh token', 400);
+
+    const user = await this.userModel.findById(decodedUser._id);
+    if (!user) throw new HttpException('Invalid refresh token', 400);
 
     const tokens = this.tokensService.generateTokenPair({
       _id: user._id,
@@ -84,17 +87,17 @@ export class AuthService {
     await user.save();
 
     return {
-      email: user.email,
-      name: user.name,
-      _id: user._id,
       refreshToken: user.refreshToken,
       accessToken: tokens.access_token,
     };
   }
 
-  async logout(id: string) {
-    const user = await this.userModel.findById(id);
-    if (!user) throw new HttpException('Cant find a user', 400);
+  async logout(refreshToken: string) {
+    const decodedUser = this.tokensService.parseRefreshToken(refreshToken);
+    if (!decodedUser) throw new HttpException('Invalid refresh token', 400);
+
+    const user = await this.userModel.findById(decodedUser._id);
+    if (!user) throw new HttpException('Invalid refresh token', 400);
 
     user.refreshToken = '';
     await user.save();

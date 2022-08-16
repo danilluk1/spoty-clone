@@ -1,39 +1,46 @@
 import { Injectable } from '@nestjs/common';
-import { JwtService } from '@nestjs/jwt';
 import { UserForToken } from './interfaces/UserForToken';
+import * as jwt from 'jsonwebtoken';
 @Injectable()
 export class TokensService {
-  constructor(private jwtService: JwtService) {}
+  constructor() {}
 
   generateTokenPair(user: UserForToken) {
-    const access_token = this.jwtService.sign(
+    const access_token = jwt.sign(
       { ...user },
-      {
-        secret: process.env.ACCESS_TOKEN_PRIVATE_KEY,
-        expiresIn: '1h',
-      },
+      process.env.ACCESS_TOKEN_PRIVATE_KEY,
+      { expiresIn: '1h' },
     );
 
-    const refresh_token = this.jwtService.sign(
+    const refresh_token = jwt.sign(
       { ...user },
-      {
-        secret: process.env.REFRESH_TOKEN_PRIVATE_KEY,
-        expiresIn: '10d',
-      },
+      process.env.REFRESH_TOKEN_PRIVATE_KEY,
+      { expiresIn: '10d' },
     );
 
     return { access_token, refresh_token };
   }
 
   parseAccessToken(access_token: string) {
-    this.jwtService.verify(access_token, {
-      secret: process.env.ACCESS_TOKEN_PRIVATE_KEY,
-    });
+    try {
+      return jwt.verify(
+        access_token,
+        process.env.ACCESS_TOKEN_PRIVATE_KEY,
+      ) as UserForToken;
+    } catch (e) {
+      return null;
+    }
   }
 
-  parseRefreshToken(refresh_token: string) {
-    this.jwtService.verify(refresh_token, {
-      secret: process.env.REFRESH_TOKEN_PRIVATE_KEY,
-    });
+  parseRefreshToken(refresh_token: string): UserForToken {
+    try {
+      const decoded = jwt.verify(
+        refresh_token,
+        process.env.REFRESH_TOKEN_PRIVATE_KEY,
+      ) as UserForToken;
+      return decoded;
+    } catch (e) {
+      return null;
+    }
   }
 }
