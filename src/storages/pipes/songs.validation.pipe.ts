@@ -15,6 +15,8 @@ export class SongsValidationPipe implements PipeTransform {
         throw new BadRequestException('Size must be less than 15MB');
       if (song.originalname.split('.').pop() !== 'mp3')
         throw new BadRequestException('Filetype must be mp3');
+      if (song.mimetype !== 'audio/mpeg')
+        throw new BadRequestException('Mimetype error');
     }
     return songs;
   }

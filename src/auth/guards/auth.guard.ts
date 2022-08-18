@@ -1,5 +1,6 @@
 import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
 import { Observable } from 'rxjs';
+import { UserForToken } from 'src/tokens/interfaces/UserForToken';
 import { TokensService } from 'src/tokens/tokens.service';
 
 @Injectable()
@@ -17,8 +18,8 @@ export class AuthGuard implements CanActivate {
 
     const res = this.tokensService.parseAccessToken(access_token);
     if (!res) return false;
-    console.log('guard');
-    request.body.test = '123';
+
+    request.user = res;
     return true;
   }
 }

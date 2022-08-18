@@ -18,7 +18,7 @@ export class Storage {
   @Prop({ required: true })
   size: number;
 
-  @Prop({ type: mongoose.Schema.Types.ObjectId, ref: 'User' })
+  @Prop({ type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true })
   user: User;
 }
 
