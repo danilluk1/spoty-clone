@@ -1,6 +1,6 @@
 import { HttpException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import mongoose, { Model } from 'mongoose';
 import { UserForToken } from 'src/tokens/interfaces/UserForToken';
 import { User, UserDocument } from 'src/users/schemas/user.schema';
 import { StorageDocument, Storage } from './schemas/storage.schema';
@@ -35,5 +35,15 @@ export class StoragesService {
       .limit(limit)
       .skip((page - 1) * limit);
     return songs;
+  }
+
+  async getSongById(_id: string): Promise<StorageDocument> {
+    if (!mongoose.isValidObjectId(_id))
+      throw new HttpException('Invalid id', 400);
+
+    const dbSong = await this.storageModel.findById(_id);
+    if (!dbSong) throw new HttpException('Cannot find song', 404);
+
+    return dbSong;
   }
 }

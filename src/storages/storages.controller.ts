@@ -6,19 +6,22 @@ import {
   Post,
   Query,
   Req,
+  Res,
   UploadedFiles,
   UseGuards,
   UseInterceptors,
+  ValidationPipe,
 } from '@nestjs/common';
-import { Request } from 'express';
+import { Request, Response } from 'express';
 import { FilesInterceptor } from '@nestjs/platform-express';
 import { AuthGuard } from 'src/auth/guards/auth.guard';
 import { TokensService } from 'src/tokens/tokens.service';
 import { SongsValidationPipe } from './pipes/songs.validation.pipe';
 import { StoragesService } from './storages.service';
 import { UserForToken } from 'src/tokens/interfaces/UserForToken';
-import { IsPositive } from 'class-validator';
 import { PaginationParams } from './interfaces/pagination.params';
+import { createReadStream } from 'fs';
+import { join } from 'path';
 
 @Controller('storage')
 @UseGuards(AuthGuard)
@@ -42,7 +45,7 @@ export class StoragesController {
   @Get('tracks')
   async getSongs(
     @Req() req: Request,
-    @Query() { page, limit }: PaginationParams,
+    @Query(new ValidationPipe()) { page, limit }: PaginationParams,
   ) {
     const songs = await this.storagesService.getSongs(
       req.user as UserForToken,
@@ -50,5 +53,20 @@ export class StoragesController {
       limit,
     );
     return songs;
+  }
+
+  @Get('track/:id')
+  async getSong(
+    @Param('id') id: string,
+    @Req() req: Request,
+    @Res() res: Response,
+  ) {
+    const user = req.user as UserForToken;
+    const dbSong = await this.storagesService.getSongById(id);
+    const song = createReadStream(
+      join(process.cwd(), process.env.STORAGE_PATH, user.email, dbSong.name),
+    );
+
+    song.pipe(res);
   }
 }
